@@ -1,12 +1,13 @@
 package main
 
 import (
-	"go-mail/internal/contract"
+	"go-mail/internal/domain/campaign"
+	"go-mail/internal/endpoints"
+	"go-mail/internal/infrastructure/db"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/go-chi/render"
 )
 
 func main() {
@@ -16,10 +17,20 @@ func main() {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	r.Post("/campaigns", func(w http.ResponseWriter, r *http.Request) {
-		var request contract.NewCampaign
-		render.DecodeJSON(r.Body, &request)
-	})
+	handler := endpoints.Handler{}
 
+	campaignService := campaign.Service{
+		Repository: &db.CampaignRepository{},
+	}
+
+	handler := endpoints.Handler{
+		CampaignService = campaignService
+	}
+
+	r.Post("/campaigns", endpoints.HandlerError(handler.CampaignPost))
+	r.Get("/campaigns", endpoints.CampaignGet)
+
+	print("Starting service on port 3000 ...")
 	http.ListenAndServe(":3000", r)
+
 }

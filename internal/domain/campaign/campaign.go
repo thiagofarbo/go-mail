@@ -1,7 +1,7 @@
 package campaign
 
 import (
-	"errors"
+	internalerrors "go-mail/internal/internal-errors"
 	"time"
 
 	"github.com/rs/xid"
@@ -12,18 +12,14 @@ type Contact struct {
 }
 
 type Campaign struct {
-	ID        string
-	Name      string
-	CreatedAt time.Time
-	Content   string
-	Contacts  []Contact
+	ID        string    `validate: "required"`
+	Name      string    `validate: "min=5,max=24"`
+	CreatedAt time.Time `validate: "required"`
+	Content   string    `validate: "min=5,max=1024"`
+	Contacts  []Contact `validate: "min=1"`
 }
 
 func NewCampaign(name string, content string, emails []string) (*Campaign, error) {
-
-	if name == "" {
-		return nil, errors.New("Name can not be empty or null")
-	}
 
 	contacts := make([]Contact, len(emails))
 	for index, email := range emails {
@@ -37,11 +33,10 @@ func NewCampaign(name string, content string, emails []string) (*Campaign, error
 		Content:   content,
 		Contacts:  contacts,
 	}
-	// err := error.Error()
+	err := internalerrors.ValidateStruct(campaign)
 
-	// if err == nil {
-	// 	return campaign, nil
-	// }
-
-	return campaign, nil
+	if err == nil {
+		return campaign, nil
+	}
+	return nil, err
 }
